@@ -3,93 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SpecuFin: Master Protocol v2</title>
+    <title>SpecuFin: Access Restricted</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* ANIMATIONS */
         .fade-in { animation: fadeIn 0.4s ease-in-out; }
         .slide-up { animation: slideUp 0.4s ease-out; }
-        .pulse-soft { animation: pulseSoft 2s infinite; }
         .spin-slow { animation: spin 3s linear infinite; }
-        
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(15px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes pulseSoft { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        body { transition: background-color 0.4s ease, color 0.4s ease; }
         
-        /* UTILITIES */
+        /* Gatekeeper Overlay */
+        #gatekeeper {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #020617; z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; transition: opacity 0.5s ease;
+        }
+        
         .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
         .glass-panel-light { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(0,0,0,0.05); }
-        
-        /* HUNTER VS SHARK THEME VARIABLES */
         .theme-hunter { --bg: #0f172a; --text: #f1f5f9; --accent: #34d399; }
         .theme-shark { --bg: #f8fafc; --text: #0f172a; --accent: #2563eb; }
     </style>
 </head>
-<body id="app-body" class="bg-slate-900 text-gray-100 font-sans min-h-screen selection:bg-emerald-500 selection:text-white">
+<body id="app-body" class="bg-slate-900 text-gray-100 font-sans min-h-screen selection:bg-emerald-500 selection:text-white overflow-hidden">
 
-    <!-- APP ROOT -->
-    <div id="root"></div>
+    <!-- GATEKEEPER OVERLAY -->
+    <div id="gatekeeper">
+        <div class="text-center p-8 max-w-md w-full">
+            <div class="text-3xl font-bold tracking-tighter text-emerald-500 mb-2">SpecuFin</div>
+            <p class="text-slate-500 text-xs uppercase tracking-widest mb-8">Restricted Access // Protocol V1</p>
+            <input type="password" id="access-code" placeholder="Enter Access Key" 
+                class="w-full bg-slate-800 border border-slate-700 rounded-xl p-4 text-center text-white focus:outline-none focus:border-emerald-500 mb-4 transition-all">
+            <button onclick="checkAccess()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-emerald-900/20">
+                Authenticate
+            </button>
+            <p id="error-msg" class="text-red-500 text-xs mt-4 hidden">Access Denied: Invalid Key</p>
+        </div>
+    </div>
+
+    <!-- APP ROOT (Hidden initially) -->
+    <div id="root" class="opacity-0 transition-opacity duration-1000"></div>
 
     <script>
-        // --- 0. DATA & CONSTANTS ---
-        const USER_ID = "SHARK_001";
-        
-        // Expanded Mock DB for Filtering Demo
-        let MOCK_DB = [
-            {
-                id: "prop_1",
-                address: "123 Main St, Easton, CT",
-                price: "$1,250,000",
-                ownerId: USER_ID, 
-                status: "visible",
-                specs: { beds: 4, baths: 3, sqft: 3500, lot: "2.5 Acres" },
-                features: ["Pool", "Smart Home", "3+ Garage"],
-                scores: { match: 92, compatibility: 88 },
-                sharkStats: { views: 1240, roi: "+14%", stealthReqs: 12 },
-                imgColor: "bg-slate-700"
-            },
-            {
-                id: "prop_2",
-                address: "88 Industrial Ave, Bridgeport, CT",
-                price: "$850,000",
-                ownerId: "OTHER", 
-                status: "stealth",
-                specs: { beds: 0, baths: 2, sqft: 5000, lot: "0.5 Acres" },
-                features: ["Commercial Zoning", "Loading Dock"],
-                scores: { match: 65, compatibility: 40 },
-                sharkStats: null,
-                imgColor: "bg-stone-700"
-            },
-            {
-                id: "prop_3",
-                address: "450 Ocean Dr, Miami, FL",
-                price: "$4,500,000",
-                ownerId: "OTHER",
-                status: "hidden",
-                specs: { beds: 5, baths: 6, sqft: 6000, lot: "0.2 Acres" },
-                features: ["Pool", "Waterfront", "Smart Home"],
-                scores: { match: 78, compatibility: 95 },
-                sharkStats: null,
-                imgColor: "bg-cyan-900"
-            },
-            {
-                id: "prop_4",
-                address: "99 Hillside Rd, Easton, CT",
-                price: "$2,100,000",
-                ownerId: "OTHER",
-                status: "visible",
-                specs: { beds: 6, baths: 5, sqft: 7200, lot: "5 Acres" },
-                features: ["Pool", "Tennis Court", "Guest House", "3+ Garage"],
-                scores: { match: 98, compatibility: 99 },
-                sharkStats: null,
-                imgColor: "bg-emerald-900"
+        // --- GATEKEEPER LOGIC ---
+        function checkAccess() {
+            const input = document.getElementById('access-code').value;
+            const gate = document.getElementById('gatekeeper');
+            const root = document.getElementById('root');
+            const err = document.getElementById('error-msg');
+
+            // HARDCODED PASSWORD: "SHARK"
+            if (input === "SHARK") {
+                gate.style.opacity = '0';
+                setTimeout(() => { gate.style.display = 'none'; }, 500);
+                root.classList.remove('opacity-0');
+                document.body.classList.remove('overflow-hidden');
+                // Init App
+                renderApp();
+            } else {
+                err.classList.remove('hidden');
+                document.getElementById('access-code').classList.add('border-red-500');
             }
+        }
+
+        // --- CORE APP DATA & LOGIC ---
+        const USER_ID = "SHARK_001";
+        let MOCK_DB = [
+            { id: "prop_1", address: "123 Main St, Easton, CT", price: "$1,250,000", ownerId: USER_ID, status: "visible", specs: { beds: 4, baths: 3, sqft: 3500, lot: "2.5 Acres" }, features: ["Pool", "Smart Home", "3+ Garage"], scores: { match: 92, compatibility: 88 }, sharkStats: { views: 1240, roi: "+14%", stealthReqs: 12 }, imgColor: "bg-slate-700" },
+            { id: "prop_2", address: "88 Industrial Ave, Bridgeport, CT", price: "$850,000", ownerId: "OTHER", status: "stealth", specs: { beds: 0, baths: 2, sqft: 5000, lot: "0.5 Acres" }, features: ["Commercial Zoning", "Loading Dock"], scores: { match: 65, compatibility: 40 }, sharkStats: null, imgColor: "bg-stone-700" },
+            { id: "prop_3", address: "450 Ocean Dr, Miami, FL", price: "$4,500,000", ownerId: "OTHER", status: "hidden", specs: { beds: 5, baths: 6, sqft: 6000, lot: "0.2 Acres" }, features: ["Pool", "Waterfront", "Smart Home"], scores: { match: 78, compatibility: 95 }, sharkStats: null, imgColor: "bg-cyan-900" },
+            { id: "prop_4", address: "99 Hillside Rd, Easton, CT", price: "$2,100,000", ownerId: "OTHER", status: "visible", specs: { beds: 6, baths: 5, sqft: 7200, lot: "5 Acres" }, features: ["Pool", "Tennis Court", "Guest House", "3+ Garage"], scores: { match: 98, compatibility: 99 }, sharkStats: null, imgColor: "bg-emerald-900" }
         ];
 
-        // --- 1. ICONS (SVG) ---
         const ICONS = {
             target: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
             briefcase: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`,
@@ -100,117 +87,53 @@
             check: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
             lock: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
             unlock: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>`,
-            ghost: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="12" r="3"/><path d="M18 18h.01"/></svg>`,
-            send: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`
+            ghost: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="12" r="3"/><path d="M18 18h.01"/></svg>`
         };
 
-        // --- 2. STATE MANAGEMENT ---
         const state = {
-            mode: 'hunter', // 'hunter' | 'shark'
-            view: 'list',   // 'list' | 'detail' | 'add_asset'
-            activePropId: null,
-            searchQuery: '',
-            filters: { must: [], nice: [] },
-            addAssetStep: 0 // 0: Input, 1: Loading, 2: Confirm
+            mode: 'hunter', view: 'list', activePropId: null, searchQuery: '', 
+            filters: { must: [], nice: [] }, addAssetStep: 0
         };
-
-        // --- 3. CORE LOGIC ---
 
         function handleToggle() {
             state.mode = state.mode === 'hunter' ? 'shark' : 'hunter';
-            if (state.view === 'detail' && state.activePropId) {
-                // Stay on detail to show context switch
-            } else {
-                state.view = 'list';
-            }
-            updateTheme();
-            renderApp();
+            if (!(state.view === 'detail' && state.activePropId)) state.view = 'list';
+            updateTheme(); renderApp();
         }
-
-        function setView(v) {
-            state.view = v;
-            renderApp();
-        }
-
-        function selectProperty(id) {
-            state.activePropId = id;
-            state.view = 'detail';
-            renderApp();
-        }
-
+        function setView(v) { state.view = v; renderApp(); }
+        function selectProperty(id) { state.activePropId = id; state.view = 'detail'; renderApp(); }
         function toggleFilter(type, val) {
             const list = state.filters[type];
             state.filters[type] = list.includes(val) ? list.filter(i => i !== val) : [...list, val];
             renderApp();
         }
-
         function updateTheme() {
             const body = document.getElementById('app-body');
-            if (state.mode === 'hunter') {
-                body.className = "bg-slate-900 text-gray-100 font-sans min-h-screen transition-colors duration-500 selection:bg-emerald-500 selection:text-white";
-            } else {
-                body.className = "bg-slate-50 text-slate-900 font-sans min-h-screen transition-colors duration-500 selection:bg-blue-500 selection:text-white";
-            }
+            if (state.mode === 'hunter') body.className = "bg-slate-900 text-gray-100 font-sans min-h-screen transition-colors duration-500 selection:bg-emerald-500 selection:text-white";
+            else body.className = "bg-slate-50 text-slate-900 font-sans min-h-screen transition-colors duration-500 selection:bg-blue-500 selection:text-white";
         }
-
-        // --- ADD ASSET LOGIC ---
         function initiateAddAsset() {
             const input = document.getElementById('new-asset-address').value;
             if(!input) return;
-            
-            state.addAssetStep = 1;
-            renderApp();
-
-            // Simulate API delay
-            setTimeout(() => {
-                state.addAssetStep = 2;
-                renderApp();
-            }, 1500);
+            state.addAssetStep = 1; renderApp();
+            setTimeout(() => { state.addAssetStep = 2; renderApp(); }, 1500);
         }
-
         function confirmAddAsset() {
-            // Add to mock DB
             const newId = "prop_" + (MOCK_DB.length + 1);
-            MOCK_DB.push({
-                id: newId,
-                address: "740 Park Ave, New York, NY", // Mock result
-                price: "$12,500,000",
-                ownerId: USER_ID,
-                status: "visible",
-                specs: { beds: 5, baths: 6, sqft: 8000, lot: "0.0 Acres" },
-                features: [],
-                scores: { match: 100, compatibility: 100 },
-                sharkStats: { views: 0, roi: "0%", stealthReqs: 0 },
-                imgColor: "bg-blue-800"
-            });
-            
-            state.addAssetStep = 0;
-            state.view = 'list';
-            renderApp();
+            MOCK_DB.push({ id: newId, address: "740 Park Ave, New York, NY", price: "$12,500,000", ownerId: USER_ID, status: "visible", specs: { beds: 5, baths: 6, sqft: 8000, lot: "0.0 Acres" }, features: [], scores: { match: 100, compatibility: 100 }, sharkStats: { views: 0, roi: "0%", stealthReqs: 0 }, imgColor: "bg-blue-800" });
+            state.addAssetStep = 0; state.view = 'list'; renderApp();
         }
-
-        // --- 4. RENDERERS ---
 
         function renderApp() {
             const root = document.getElementById('root');
-            root.innerHTML = `
-                ${renderNav()}
-                <main class="pt-24 pb-12 px-4 max-w-7xl mx-auto">
-                    ${routeView()}
-                </main>
-            `;
+            root.innerHTML = `${renderNav()}<main class="pt-24 pb-12 px-4 max-w-7xl mx-auto">${routeView()}</main>`;
         }
 
         function routeView() {
             const isHunter = state.mode === 'hunter';
             const prop = MOCK_DB.find(p => p.id === state.activePropId);
-
-            if (state.view === 'list') {
-                return isHunter ? renderHunterSearch() : renderSharkPortfolio();
-            } 
-            else if (state.view === 'add_asset') {
-                return renderSharkAddAsset();
-            }
+            if (state.view === 'list') return isHunter ? renderHunterSearch() : renderSharkPortfolio();
+            else if (state.view === 'add_asset') return renderSharkAddAsset();
             else if (state.view === 'detail' && prop) {
                 if (isHunter) return renderHunterDetail(prop);
                 if (prop.ownerId === USER_ID) return renderSharkManagement(prop);
@@ -218,345 +141,57 @@
             }
         }
 
-        // --- NAV ---
         function renderNav() {
             const isHunter = state.mode === 'hunter';
             const accent = isHunter ? 'text-emerald-400' : 'text-blue-600';
             const bg = isHunter ? 'bg-slate-900/90 border-slate-800' : 'bg-white/90 border-slate-200';
-            
-            return `
-            <nav class="fixed top-0 w-full z-50 backdrop-blur-md border-b ${bg} transition-colors duration-500">
-                <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <div class="flex items-center gap-3 cursor-pointer" onclick="setView('list')">
-                        <div class="font-bold text-xl tracking-tighter ${accent}">SpecuFin</div>
-                        <div class="text-[10px] font-mono uppercase px-2 py-1 rounded ${isHunter ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}">
-                            ${isHunter ? 'Hunter Protocol' : 'Shark Den OS'}
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <button onclick="handleToggle()" class="relative w-14 h-8 rounded-full transition-colors duration-300 ${isHunter ? 'bg-emerald-900/50 ring-1 ring-emerald-500' : 'bg-blue-100 ring-1 ring-blue-400'}">
-                            <div class="absolute top-1 w-6 h-6 rounded-full shadow-sm flex items-center justify-center transition-all duration-300 ${isHunter ? 'left-7 bg-emerald-400 text-slate-900' : 'left-1 bg-blue-600 text-white'}">
-                                ${isHunter ? ICONS.target : ICONS.briefcase}
-                            </div>
-                        </button>
-                    </div>
-                </div>
-            </nav>
-            `;
+            return `<nav class="fixed top-0 w-full z-50 backdrop-blur-md border-b ${bg} transition-colors duration-500"><div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between"><div class="flex items-center gap-3 cursor-pointer" onclick="setView('list')"><div class="font-bold text-xl tracking-tighter ${accent}">SpecuFin</div><div class="text-[10px] font-mono uppercase px-2 py-1 rounded ${isHunter ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}">${isHunter ? 'Hunter Protocol' : 'Shark Den OS'}</div></div><div class="flex items-center gap-4"><button onclick="handleToggle()" class="relative w-14 h-8 rounded-full transition-colors duration-300 ${isHunter ? 'bg-emerald-900/50 ring-1 ring-emerald-500' : 'bg-blue-100 ring-1 ring-blue-400'}"><div class="absolute top-1 w-6 h-6 rounded-full shadow-sm flex items-center justify-center transition-all duration-300 ${isHunter ? 'left-7 bg-emerald-400 text-slate-900' : 'left-1 bg-blue-600 text-white'}">${isHunter ? ICONS.target : ICONS.briefcase}</div></button></div></div></nav>`;
         }
 
-        // --- HUNTER: SEARCH & RESULTS (UPGRADED) ---
-        
         function renderHunterSearch() {
-            // Logic: Filter MOCK_DB
             let results = MOCK_DB.filter(p => {
-                // 1. Search Query
                 const matchesSearch = p.address.toLowerCase().includes(state.searchQuery.toLowerCase());
-                // 2. "Must Have" Filters (Strict AND)
                 const matchesMust = state.filters.must.every(f => p.features.includes(f));
-                
                 return matchesSearch && matchesMust;
             });
-
-            // Sort by "Nice to Have" (Simulated Ranking)
             results.sort((a, b) => {
                 const aScore = state.filters.nice.filter(f => a.features.includes(f)).length;
                 const bScore = state.filters.nice.filter(f => b.features.includes(f)).length;
                 return bScore - aScore;
             });
-
-            return `
-            <div class="max-w-4xl mx-auto fade-in">
-                
-                <!-- STICKY SEARCH HUD -->
-                <div class="sticky top-20 z-40 mb-8">
-                    <div class="glass-panel rounded-2xl p-2 shadow-2xl flex gap-2">
-                        <div class="relative flex-grow">
-                            <input type="text" 
-                                placeholder="Target Address, ID, or Coordinates..." 
-                                class="w-full bg-slate-800/50 border-none text-white pl-10 pr-4 py-3 rounded-xl focus:ring-1 focus:ring-emerald-500 transition-all"
-                                value="${state.searchQuery}"
-                                oninput="state.searchQuery = this.value; renderApp();"
-                            >
-                            <div class="absolute top-3.5 left-3 text-slate-500">${ICONS.search}</div>
-                        </div>
-                        <!-- Active Filter Count Badge -->
-                        ${(state.filters.must.length + state.filters.nice.length) > 0 ? 
-                            `<div class="flex items-center px-4 bg-emerald-900/30 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-bold">
-                                ${state.filters.must.length + state.filters.nice.length} Filters Active
-                            </div>` : ''
-                        }
-                    </div>
-                </div>
-
-                <!-- FILTERS (Must vs Nice) -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                    <!-- Must Have -->
-                    <div class="p-5 rounded-2xl bg-slate-800/40 border border-red-900/30 hover:border-red-900/60 transition-colors">
-                        <div class="text-xs font-bold text-red-400 uppercase mb-3 flex gap-2 items-center tracking-widest">
-                            Non-Negotiables (Strict)
-                        </div>
-                        <div class="flex flex-wrap gap-2">
-                            ${['Pool', '3+ Garage', '> 1 Acre', 'Guest House'].map(f => `
-                                <button onclick="toggleFilter('must', '${f}')" class="text-[11px] font-medium px-3 py-1.5 rounded-lg border transition-all ${state.filters.must.includes(f) ? 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-900/50' : 'border-slate-700 text-slate-400 hover:border-slate-500'}">
-                                    ${f}
-                                </button>
-                            `).join('')}
-                        </div>
-                    </div>
-                    
-                    <!-- Nice to Have -->
-                    <div class="p-5 rounded-2xl bg-slate-800/40 border border-emerald-900/30 hover:border-emerald-900/60 transition-colors">
-                        <div class="text-xs font-bold text-emerald-400 uppercase mb-3 flex gap-2 items-center tracking-widest">
-                            Wish List (Boost Score)
-                        </div>
-                        <div class="flex flex-wrap gap-2">
-                            ${['Waterfront', 'Smart Home', 'Tennis Court', 'Commercial Zoning'].map(f => `
-                                <button onclick="toggleFilter('nice', '${f}')" class="text-[11px] font-medium px-3 py-1.5 rounded-lg border transition-all ${state.filters.nice.includes(f) ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-900/50' : 'border-slate-700 text-slate-400 hover:border-slate-500'}">
-                                    ${f}
-                                </button>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- RESULT FEED -->
-                <div class="space-y-6">
-                    ${results.length === 0 ? 
-                        `<div class="text-center py-12 opacity-50">No targets match your acquisition criteria.</div>` 
-                        : results.map(p => renderHunterCard(p)).join('')
-                    }
-                </div>
-            </div>
-            `;
+            return `<div class="max-w-4xl mx-auto fade-in"><div class="sticky top-20 z-40 mb-8"><div class="glass-panel rounded-2xl p-2 shadow-2xl flex gap-2"><div class="relative flex-grow"><input type="text" placeholder="Target Address, ID, or Coordinates..." class="w-full bg-slate-800/50 border-none text-white pl-10 pr-4 py-3 rounded-xl focus:ring-1 focus:ring-emerald-500 transition-all" value="${state.searchQuery}" oninput="state.searchQuery = this.value; renderApp();"><div class="absolute top-3.5 left-3 text-slate-500">${ICONS.search}</div></div>${(state.filters.must.length + state.filters.nice.length) > 0 ? `<div class="flex items-center px-4 bg-emerald-900/30 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-bold">${state.filters.must.length + state.filters.nice.length} Filters Active</div>` : ''}</div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10"><div class="p-5 rounded-2xl bg-slate-800/40 border border-red-900/30 hover:border-red-900/60 transition-colors"><div class="text-xs font-bold text-red-400 uppercase mb-3 flex gap-2 items-center tracking-widest">Non-Negotiables (Strict)</div><div class="flex flex-wrap gap-2">${['Pool', '3+ Garage', '> 1 Acre', 'Guest House'].map(f => `<button onclick="toggleFilter('must', '${f}')" class="text-[11px] font-medium px-3 py-1.5 rounded-lg border transition-all ${state.filters.must.includes(f) ? 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-900/50' : 'border-slate-700 text-slate-400 hover:border-slate-500'}">${f}</button>`).join('')}</div></div><div class="p-5 rounded-2xl bg-slate-800/40 border border-emerald-900/30 hover:border-emerald-900/60 transition-colors"><div class="text-xs font-bold text-emerald-400 uppercase mb-3 flex gap-2 items-center tracking-widest">Wish List (Boost Score)</div><div class="flex flex-wrap gap-2">${['Waterfront', 'Smart Home', 'Tennis Court', 'Commercial Zoning'].map(f => `<button onclick="toggleFilter('nice', '${f}')" class="text-[11px] font-medium px-3 py-1.5 rounded-lg border transition-all ${state.filters.nice.includes(f) ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-900/50' : 'border-slate-700 text-slate-400 hover:border-slate-500'}">${f}</button>`).join('')}</div></div></div><div class="space-y-6">${results.length === 0 ? `<div class="text-center py-12 opacity-50">No targets match your acquisition criteria.</div>` : results.map(p => renderHunterCard(p)).join('')}</div></div>`;
         }
 
         function renderHunterCard(p) {
-            // Highlight "Nice" features in green
             const renderFeatures = p.features.map(f => {
                 const isNice = state.filters.nice.includes(f);
                 const isMust = state.filters.must.includes(f);
-                let colorClass = "text-slate-400 border-slate-700"; // default
+                let colorClass = "text-slate-400 border-slate-700"; 
                 if(isNice) colorClass = "text-emerald-300 border-emerald-500/50 bg-emerald-900/20";
                 if(isMust) colorClass = "text-red-200 border-red-500/50 bg-red-900/20";
-                
                 return `<span class="text-[10px] px-2 py-0.5 rounded border ${colorClass}">${f}</span>`;
             }).join('');
-
-            return `
-            <div onclick="selectProperty('${p.id}')" class="group relative overflow-hidden rounded-2xl bg-slate-800 border border-slate-700 hover:border-emerald-500/50 transition-all cursor-pointer hover:shadow-xl hover:shadow-emerald-900/10">
-                <div class="flex flex-col md:flex-row">
-                    <!-- Placeholder Image Block -->
-                    <div class="md:w-48 h-32 md:h-auto ${p.imgColor} flex items-center justify-center relative">
-                         <div class="text-white/20 font-bold text-4xl select-none">IMG</div>
-                         ${p.status === 'stealth' ? '<div class="absolute inset-0 bg-black/50 flex items-center justify-center"><span class="text-xs font-bold border border-white/30 px-2 py-1 rounded uppercase tracking-widest backdrop-blur">Off Market</span></div>' : ''}
-                    </div>
-                    
-                    <!-- Content -->
-                    <div class="p-5 flex-grow flex flex-col justify-between">
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <h3 class="font-bold text-lg text-white group-hover:text-emerald-400 transition-colors">${p.address}</h3>
-                                <p class="font-mono text-sm text-emerald-500/80">${p.price}</p>
-                            </div>
-                            <div class="flex flex-col items-end">
-                                <div class="text-2xl font-light text-white">${p.scores.match}<span class="text-sm text-emerald-500">%</span></div>
-                                <div class="text-[10px] text-slate-500 uppercase tracking-wider">Match Score</div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex gap-4 text-xs text-slate-400 mb-3 font-mono">
-                            <span>${p.specs.beds} BD</span>
-                            <span>${p.specs.baths} BA</span>
-                            <span>${p.specs.sqft} SQFT</span>
-                            <span class="text-slate-500">|</span>
-                            <span>${p.specs.lot}</span>
-                        </div>
-
-                        <div class="flex flex-wrap gap-2 mt-auto">
-                            ${renderFeatures}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            `;
+            return `<div onclick="selectProperty('${p.id}')" class="group relative overflow-hidden rounded-2xl bg-slate-800 border border-slate-700 hover:border-emerald-500/50 transition-all cursor-pointer hover:shadow-xl hover:shadow-emerald-900/10"><div class="flex flex-col md:flex-row"><div class="md:w-48 h-32 md:h-auto ${p.imgColor} flex items-center justify-center relative"><div class="text-white/20 font-bold text-4xl select-none">IMG</div>${p.status === 'stealth' ? '<div class="absolute inset-0 bg-black/50 flex items-center justify-center"><span class="text-xs font-bold border border-white/30 px-2 py-1 rounded uppercase tracking-widest backdrop-blur">Off Market</span></div>' : ''}</div><div class="p-5 flex-grow flex flex-col justify-between"><div class="flex justify-between items-start mb-2"><div><h3 class="font-bold text-lg text-white group-hover:text-emerald-400 transition-colors">${p.address}</h3><p class="font-mono text-sm text-emerald-500/80">${p.price}</p></div><div class="flex flex-col items-end"><div class="text-2xl font-light text-white">${p.scores.match}<span class="text-sm text-emerald-500">%</span></div><div class="text-[10px] text-slate-500 uppercase tracking-wider">Match Score</div></div></div><div class="flex gap-4 text-xs text-slate-400 mb-3 font-mono"><span>${p.specs.beds} BD</span><span>${p.specs.baths} BA</span><span>${p.specs.sqft} SQFT</span><span class="text-slate-500">|</span><span>${p.specs.lot}</span></div><div class="flex flex-wrap gap-2 mt-auto">${renderFeatures}</div></div></div></div>`;
         }
 
         function renderHunterDetail(prop) {
-            return `
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in">
-                <!-- LEFT: INTEL & DATA -->
-                <div class="lg:col-span-2 space-y-6">
-                    <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 relative overflow-hidden">
-                        <button onclick="setView('list')" class="absolute top-6 right-6 text-slate-500 hover:text-white">✕</button>
-                        <h1 class="text-3xl font-bold mb-2">${prop.address}</h1>
-                        <div class="flex gap-4 text-sm text-emerald-400 font-mono mb-6">${prop.price} <span class="text-slate-500">|</span> ${prop.specs.beds}bd ${prop.specs.baths}ba <span class="text-slate-500">|</span> Match: ${prop.scores.match}%</div>
-                        
-                        <div class="grid grid-cols-3 gap-4 mb-8">
-                            <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-700 text-center">
-                                <div class="text-2xl font-bold text-white">${prop.scores.compatibility}</div>
-                                <div class="text-[10px] uppercase text-slate-500 tracking-wider">Compatibility</div>
-                            </div>
-                             <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-700 text-center">
-                                <div class="text-2xl font-bold text-white">High</div>
-                                <div class="text-[10px] uppercase text-slate-500 tracking-wider">Motivation Est</div>
-                            </div>
-                             <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-700 text-center">
-                                <div class="text-2xl font-bold text-white">12d</div>
-                                <div class="text-[10px] uppercase text-slate-500 tracking-wider">Days on Market</div>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-3">
-                            <button class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg transition-colors">Init Inquiry</button>
-                            <button class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg transition-colors">Shadow Follow</button>
-                        </div>
-                    </div>
-                    
-                    <!-- CHAT MOCK -->
-                    <div class="bg-slate-800 rounded-2xl border border-slate-700 p-4 text-center text-slate-500 text-xs uppercase tracking-wider">
-                        Secure Proxy Channel [Locked]
-                    </div>
-                </div>
-            </div>`;
+            return `<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in"><div class="lg:col-span-2 space-y-6"><div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 relative overflow-hidden"><button onclick="setView('list')" class="absolute top-6 right-6 text-slate-500 hover:text-white">✕</button><h1 class="text-3xl font-bold mb-2">${prop.address}</h1><div class="flex gap-4 text-sm text-emerald-400 font-mono mb-6">${prop.price} <span class="text-slate-500">|</span> ${prop.specs.beds}bd ${prop.specs.baths}ba <span class="text-slate-500">|</span> Match: ${prop.scores.match}%</div><div class="grid grid-cols-3 gap-4 mb-8"><div class="bg-slate-900/50 p-4 rounded-lg border border-slate-700 text-center"><div class="text-2xl font-bold text-white">${prop.scores.compatibility}</div><div class="text-[10px] uppercase text-slate-500 tracking-wider">Compatibility</div></div><div class="bg-slate-900/50 p-4 rounded-lg border border-slate-700 text-center"><div class="text-2xl font-bold text-white">High</div><div class="text-[10px] uppercase text-slate-500 tracking-wider">Motivation Est</div></div><div class="bg-slate-900/50 p-4 rounded-lg border border-slate-700 text-center"><div class="text-2xl font-bold text-white">12d</div><div class="text-[10px] uppercase text-slate-500 tracking-wider">Days on Market</div></div></div><div class="flex gap-3"><button class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg transition-colors">Init Inquiry</button><button class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg transition-colors">Shadow Follow</button></div></div><div class="bg-slate-800 rounded-2xl border border-slate-700 p-4 text-center text-slate-500 text-xs uppercase tracking-wider">Secure Proxy Channel [Locked]</div></div></div>`;
         }
 
-        // --- SHARK: ADD ASSET WIZARD ---
-
         function renderSharkAddAsset() {
-            // Step 0: Input
-            if (state.addAssetStep === 0) {
-                return `
-                <div class="max-w-xl mx-auto mt-12 fade-in">
-                    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-                        <div class="bg-slate-50 p-6 border-b border-slate-100">
-                            <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                                ${ICONS.briefcase} Secure Asset Protocol
-                            </h1>
-                            <p class="text-sm text-slate-500 mt-1">Ingest a new property into your Shark Den.</p>
-                        </div>
-                        <div class="p-8">
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Target Address</label>
-                            <input id="new-asset-address" type="text" placeholder="e.g. 740 Park Ave..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-lg font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all mb-6">
-                            
-                            <div class="flex gap-4">
-                                <button onclick="setView('list')" class="flex-1 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-50 transition">Cancel</button>
-                                <button onclick="initiateAddAsset()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition">Verify & Claim</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                `;
-            }
-            // Step 1: Loading (Oracle)
-            if (state.addAssetStep === 1) {
-                return `
-                <div class="max-w-xl mx-auto mt-12 fade-in text-center pt-12">
-                    <div class="inline-block text-blue-600 spin-slow mb-4">${ICONS.loader}</div>
-                    <h2 class="text-lg font-bold text-slate-800">Querying Property Oracle...</h2>
-                    <p class="text-sm text-slate-500">Verifying ownership records and smart contract compatibility.</p>
-                </div>
-                `;
-            }
-            // Step 2: Confirmation
-            if (state.addAssetStep === 2) {
-                return `
-                <div class="max-w-xl mx-auto mt-12 fade-in">
-                    <div class="bg-white rounded-2xl shadow-xl border border-blue-200 overflow-hidden">
-                        <div class="p-8 text-center">
-                            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                                ${ICONS.check}
-                            </div>
-                            <h2 class="text-2xl font-bold text-slate-900 mb-2">Target Identified</h2>
-                            <p class="text-slate-500 mb-6">740 Park Ave, New York, NY<br>Owner Match: <strong class="text-slate-800">Confirmed</strong></p>
-                            
-                            <button onclick="confirmAddAsset()" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg hover:bg-blue-700 transition">
-                                Ingest to Portfolio
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                `;
-            }
+            if (state.addAssetStep === 0) return `<div class="max-w-xl mx-auto mt-12 fade-in"><div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden"><div class="bg-slate-50 p-6 border-b border-slate-100"><h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">${ICONS.briefcase} Secure Asset Protocol</h1><p class="text-sm text-slate-500 mt-1">Ingest a new property into your Shark Den.</p></div><div class="p-8"><label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Target Address</label><input id="new-asset-address" type="text" placeholder="e.g. 740 Park Ave..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-lg font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all mb-6"><div class="flex gap-4"><button onclick="setView('list')" class="flex-1 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-50 transition">Cancel</button><button onclick="initiateAddAsset()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition">Verify & Claim</button></div></div></div></div>`;
+            if (state.addAssetStep === 1) return `<div class="max-w-xl mx-auto mt-12 fade-in text-center pt-12"><div class="inline-block text-blue-600 spin-slow mb-4">${ICONS.loader}</div><h2 class="text-lg font-bold text-slate-800">Querying Property Oracle...</h2><p class="text-sm text-slate-500">Verifying ownership records and smart contract compatibility.</p></div>`;
+            if (state.addAssetStep === 2) return `<div class="max-w-xl mx-auto mt-12 fade-in"><div class="bg-white rounded-2xl shadow-xl border border-blue-200 overflow-hidden"><div class="p-8 text-center"><div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">${ICONS.check}</div><h2 class="text-2xl font-bold text-slate-900 mb-2">Target Identified</h2><p class="text-slate-500 mb-6">740 Park Ave, New York, NY<br>Owner Match: <strong class="text-slate-800">Confirmed</strong></p><button onclick="confirmAddAsset()" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg hover:bg-blue-700 transition">Ingest to Portfolio</button></div></div></div>`;
         }
 
         function renderSharkPortfolio() {
-            return `
-            <div class="max-w-5xl mx-auto mt-8 fade-in">
-                <header class="flex justify-between items-end mb-10">
-                    <div>
-                        <h1 class="text-4xl font-light text-slate-900">Shark <span class="font-bold text-blue-600">Den</span></h1>
-                        <p class="text-slate-500 mt-1">Portfolio Overview & Asset Defense</p>
-                    </div>
-                    <button onclick="setView('add_asset')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 flex items-center gap-2 transition-all">
-                        ${ICONS.plus} Add Asset
-                    </button>
-                </header>
-
-                <!-- STATS -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                    ${[{l:'Total Asset Value', v:'$2.1M'}, {l:'Active Claims', v:'1'}, {l:'Pending Inquiries', v:'12'}].map(stat => `
-                        <div class="glass-panel-light p-6 rounded-xl">
-                            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">${stat.l}</div>
-                            <div class="text-3xl font-light text-slate-900">${stat.v}</div>
-                        </div>
-                    `).join('')}
-                </div>
-
-                <!-- ASSET LIST -->
-                <div class="space-y-4">
-                    ${MOCK_DB.filter(p => p.ownerId === USER_ID).map(p => `
-                        <div onclick="selectProperty('${p.id}')" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer transition-all flex justify-between items-center group">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 ${p.imgColor} text-white/50 rounded-lg flex items-center justify-center font-bold text-xs">IMG</div>
-                                <div>
-                                    <h4 class="font-bold text-lg text-slate-800 group-hover:text-blue-600 transition-colors">${p.address}</h4>
-                                    <div class="text-sm text-slate-500">${p.sharkStats.views} Views • <span class="text-blue-600 font-bold">${p.sharkStats.stealthReqs} Stealth Requests</span></div>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-mono font-bold text-slate-900">${p.price}</div>
-                                <div class="text-xs text-green-600 font-bold bg-green-50 px-2 py-1 rounded inline-block mt-1">${p.sharkStats.roi}</div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            `;
+            return `<div class="max-w-5xl mx-auto mt-8 fade-in"><header class="flex justify-between items-end mb-10"><div><h1 class="text-4xl font-light text-slate-900">Shark <span class="font-bold text-blue-600">Den</span></h1><p class="text-slate-500 mt-1">Portfolio Overview & Asset Defense</p></div><button onclick="setView('add_asset')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 flex items-center gap-2 transition-all">${ICONS.plus} Add Asset</button></header><div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">${[{l:'Total Asset Value', v:'$2.1M'}, {l:'Active Claims', v:'1'}, {l:'Pending Inquiries', v:'12'}].map(stat => `<div class="glass-panel-light p-6 rounded-xl"><div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">${stat.l}</div><div class="text-3xl font-light text-slate-900">${stat.v}</div></div>`).join('')}</div><div class="space-y-4">${MOCK_DB.filter(p => p.ownerId === USER_ID).map(p => `<div onclick="selectProperty('${p.id}')" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer transition-all flex justify-between items-center group"><div class="flex items-center gap-4"><div class="w-12 h-12 ${p.imgColor} text-white/50 rounded-lg flex items-center justify-center font-bold text-xs">IMG</div><div><h4 class="font-bold text-lg text-slate-800 group-hover:text-blue-600 transition-colors">${p.address}</h4><div class="text-sm text-slate-500">${p.sharkStats.views} Views • <span class="text-blue-600 font-bold">${p.sharkStats.stealthReqs} Stealth Requests</span></div></div></div><div class="text-right"><div class="font-mono font-bold text-slate-900">${p.price}</div><div class="text-xs text-green-600 font-bold bg-green-50 px-2 py-1 rounded inline-block mt-1">${p.sharkStats.roi}</div></div></div>`).join('')}</div></div>`;
         }
 
-        function renderSharkManagement(prop) { 
-            return `
-            <div class="fade-in">
-                <button onclick="setView('list')" class="mb-4 text-sm text-blue-600 font-bold">← Back to Portfolio</button>
-                <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
-                    <h1 class="text-3xl font-bold text-slate-900">${prop.address}</h1>
-                    <p class="text-slate-500 mt-2">Asset Management Console</p>
-                    <div class="mt-6 pt-6 border-t border-slate-100">
-                        <h3 class="text-sm font-bold text-slate-400 uppercase mb-4">Live Controls</h3>
-                         <button class="w-full py-3 bg-red-500/10 text-red-600 font-bold rounded-lg border border-red-200 flex items-center justify-center gap-2">
-                            ${ICONS.ghost} Initiate Ghost Protocol
-                        </button>
-                    </div>
-                </div>
-            </div>`; 
-        }
-
-        function renderSharkHostileTakeover(prop) { 
-            return `
-            <div class="slide-up">
-                <button onclick="setView('list')" class="mb-4 text-sm text-red-500 font-bold">← Cancel Takeover</button>
-                <div class="bg-white border border-red-100 rounded-2xl shadow-xl p-10 text-center">
-                    <h1 class="text-3xl font-bold text-slate-900 mb-2">Claim ${prop.address}</h1>
-                    <p class="text-slate-500 mb-8">You do not own this asset. Initiate hostile protocol?</p>
-                    <button class="w-full py-4 bg-red-600 text-white rounded-xl font-bold shadow-lg hover:bg-red-700 transition">Send Binding Offer</button>
-                </div>
-            </div>`; 
-        }
-
-        // --- INIT ---
-        renderApp();
+        function renderSharkManagement(prop) { return `<div class="fade-in"><button onclick="setView('list')" class="mb-4 text-sm text-blue-600 font-bold">← Back to Portfolio</button><div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm"><h1 class="text-3xl font-bold text-slate-900">${prop.address}</h1><p class="text-slate-500 mt-2">Asset Management Console</p><div class="mt-6 pt-6 border-t border-slate-100"><h3 class="text-sm font-bold text-slate-400 uppercase mb-4">Live Controls</h3><button class="w-full py-3 bg-red-500/10 text-red-600 font-bold rounded-lg border border-red-200 flex items-center justify-center gap-2">${ICONS.ghost} Initiate Ghost Protocol</button></div></div></div>`; }
+        function renderSharkHostileTakeover(prop) { return `<div class="slide-up"><button onclick="setView('list')" class="mb-4 text-sm text-red-500 font-bold">← Cancel Takeover</button><div class="bg-white border border-red-100 rounded-2xl shadow-xl p-10 text-center"><h1 class="text-3xl font-bold text-slate-900 mb-2">Claim ${prop.address}</h1><p class="text-slate-500 mb-8">You do not own this asset. Initiate hostile protocol?</p><button class="w-full py-4 bg-red-600 text-white rounded-xl font-bold shadow-lg hover:bg-red-700 transition">Send Binding Offer</button></div></div>`; }
     </script>
 </body>
 </html>
+
 
